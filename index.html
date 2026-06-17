@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>V-MAP — Pixel Fixed</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: #1B3854;
+  }
+  /* 1440x1024 디자인을 화면 크기에 자동 맞춤 */
+  .stage {
+    width: 1440px; height: 1024px;
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%) scale(var(--scale, 1));
+    transform-origin: center center;
+  }
+  .screen {
+    width: 1440px; height: 1024px;
+    position: absolute;
+    left: 0; top: 0;
+    background: #F9FBFF;
+    overflow: hidden;
+    display: none;
+  }
+  .screen.active { display: block; }
+  .topbar {
+    width: 1440px; height: 33px;
+    left: 0; top: 0; position: absolute;
+    background: #1B3854;
+  }
+  .topbar-text {
+    width: 109px; height: 33px;
+    left: 10px; top: 5px; position: absolute;
+    color: white; font-size: 20px; font-weight: 600;
+  }
+
+  /* ========== 메인 ========== */
+  #main .logo-img {
+    width: 257px; height: 253px;
+    left: 591px; top: 76px; position: absolute;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #main .logo-img img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+  }
+  #main .title {
+    left: 551px; top: 341px; position: absolute;
+    color: #1B3854; font-size: 94px; font-weight: 700;
+  }
+  #main .sub {
+    width: 853px; height: 49px;
+    left: 293px; top: 467px; position: absolute;
+    color: #2574C0; font-size: 38px; font-weight: 600;
+    text-align: center;
+  }
+  #main .desc {
+    left: 420px; top: 559px; position: absolute;
+    color: #000F3B; font-size: 35px; font-weight: 400;
+  }
+  #main .info-card {
+    width: 1246px; height: 177px;
+    left: 97px; top: 650px; position: absolute;
+    background: white;
+    box-shadow: 0 10px 10px #E8E9EB;
+    border-radius: 10px;
+    border: 1px solid #E3EFFF;
+  }
+  #main .info-icon {
+    width: 55px; height: 43px;
+    left: 174px; top: 701px; position: absolute;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #main .info-icon img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+  }
+  #main .info-text {
+    left: 249px; top: 706px; position: absolute;
+    color: black; font-size: 26px; font-weight: 400;
+  }
+  #main .start-btn {
+    width: 292px; height: 64px;
+    left: 570px; top: 888px; position: absolute;
+    background: #1B3854; border-radius: 10px; border: none;
+    color: white; font-size: 22px; font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  #main .start-btn:hover { background: #0D328C; }
+
+  /* ========== 업로드 ========== */
+  #upload .panel {
+    width: 1246px; height: 915px;
+    left: 97px; top: 71px; position: absolute;
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #AFC7E5;
+  }
+  #upload .h1 {
+    left: 148px; top: 122px; position: absolute;
+    color: #0D328C; font-size: 45px; font-weight: 600;
+  }
+  #upload .hint {
+    left: 148px; top: 206px; position: absolute;
+    color: #002446; font-size: 28px; font-weight: 400;
+  }
+  #upload .label-pid {
+    left: 148px; top: 338px; position: absolute;
+    color: #0D328C; font-size: 28px; font-weight: 500;
+  }
+  #upload .label-age {
+    left: 742px; top: 338px; position: absolute;
+    color: #0D328C; font-size: 28px; font-weight: 500;
+  }
+  #upload .label-mri {
+    left: 148px; top: 534px; position: absolute;
+    color: #0D328C; font-size: 28px; font-weight: 500;
+  }
+  #upload .input-pid {
+    width: 552px; height: 63px;
+    left: 146px; top: 397px; position: absolute;
+    background: #F1F1F3;
+    border-radius: 10px;
+    border: 1px solid #AFC7E5;
+    padding: 0 24px;
+    font-size: 22px;
+    font-family: inherit;
+  }
+  #upload .input-age {
+    width: 552px; height: 63px;
+    left: 740px; top: 397px; position: absolute;
+    background: #F1F1F3;
+    border-radius: 10px;
+    border: 1px solid #AFC7E5;
+    padding: 0 24px;
+    font-size: 22px;
+    font-family: inherit;
+  }
+  #upload input:focus { outline: none; border-color: #2574C0; background: white; }
+  #upload .dropzone {
+    width: 1146px; height: 270px;
+    left: 146px; top: 595px; position: absolute;
+    background: #F7FAFF;
+    border-radius: 10px;
+    border: 2px dashed #6BADED;
+    cursor: pointer;
+  }
+  #upload .dropzone:hover { background: #ECF4FF; }
+  #upload .upload-icon {
+    width: 59px; height: 46px;
+    left: 690px; top: 615px; position: absolute;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  #upload .upload-icon img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+  }
+  #upload .dz-title {
+    left: 559px; top: 681px; position: absolute;
+    color: #1B388E; font-size: 25px; font-weight: 400;
+    pointer-events: none;
+  }
+  #upload .dz-sub {
+    left: 492px; top: 722px; position: absolute;
+    color: #122E49; font-size: 23px; font-weight: 400;
+    pointer-events: none;
+  }
+  #upload .pick-btn {
+    width: 180px; height: 50px;
+    left: 633px; top: 780px; position: absolute;
+    background: #1B3854;
+    color: white;
+    border: none; border-radius: 8px;
+    font-size: 21px; font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px;
+    pointer-events: none;  /* dropzone 클릭으로 동작 */
+  }
+  #upload .pick-btn img {
+    width: 22px; height: 22px;
+    object-fit: contain;
+    filter: brightness(0) invert(1);
+  }
+  #upload .file-status {
+    left: 146px; top: 880px; position: absolute;
+    color: #4A5565; font-size: 16px;
+  }
+
+  /* 업로드 완료 시 드롭존 내용 (사용자 디자인 좌표 그대로) */
+  #upload .upload-done {
+    display: none;
+  }
+  #upload .upload-done.show { display: block; }
+
+  #upload .done-label {
+    position: absolute;
+    left: 655px; top: 679px;
+    color: #36B53D;
+    font-size: 25px;
+    font-weight: 400;
+  }
+  #upload .done-count {
+    position: absolute;
+    left: 651px; top: 722px;
+    color: #122E49;
+    font-size: 50px;
+    font-weight: 700;
+  }
+  #upload .done-msg {
+    position: absolute;
+    left: 559px; top: 797px;
+    color: #122E49;
+    font-size: 25px;
+    font-weight: 400;
+  }
+  #upload .done-reset {
+    position: absolute;
+    left: 1180px; top: 615px;
+    background: white;
+    border: 1px solid #AFC7E5;
+    color: #1B388E;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+  }
+  #upload .done-reset:hover { background: #ECF4FF; }
+  #upload .next-btn {
+    width: 200px; height: 56px;
+    left: 1090px; top: 870px; position: absolute;
+    background: #1B3854;
+    color: white;
+    border: none; border-radius: 10px;
+    font-size: 20px; font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  #upload .next-btn:disabled { background: #999; cursor: not-allowed; }
+  #upload .next-btn:hover:not(:disabled) { background: #0D328C; }
+  #upload .back-btn {
+    width: 120px; height: 56px;
+    left: 950px; top: 870px; position: absolute;
+    background: white;
+    color: #1B388E;
+    border: 1px solid #AFC7E5; border-radius: 10px;
+    font-size: 20px; font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  /* ========== 분석 ========== */
+  #analysis .info-bar {
+    width: 1372px; height: 65px;
+    left: 34px; top: 72px; position: absolute;
+    background: white;
+    box-shadow: 0 6px 5px #E8E9EB;
+    border-radius: 10px;
+    border: 1px solid #AFC7E5;
+  }
+  #analysis .brain-icon {
+    width: 55px; height: 43px;
+    left: 65px; top: 81px; position: absolute;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #analysis .brain-icon img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+  }
+  #analysis .meta-text {
+    left: 134px; top: 94px; position: absolute;
+    color: #0D328C; font-size: 20px; font-weight: 500;
+  }
+  #analysis .meta-text .v { color: #1B3854; font-weight: 400; margin: 0 16px 0 6px; }
+  #analysis .download-btn {
+    left: 1226px; top: 165px; position: absolute;
+    background: #1B3854;
+    color: white;
+    padding: 8px 22px 8px 12px;
+    border: none; border-radius: 8px;
+    font-size: 18px; font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex; align-items: center; gap: 8px;
+  }
+  #analysis .download-btn img {
+    width: 22px; height: 22px;
+    object-fit: contain;
+    filter: brightness(0) invert(1);
+  }
+  #analysis .download-btn:hover { background: #0D328C; }
+
+  /* 마스크 오버레이 토글 (원본 위 빨간 종양 표시) */
+  #analysis .overlay-toggle {
+    position: absolute;
+    left: 34px; top: 168px;
+    display: flex; align-items: center; gap: 8px;
+    background: white;
+    border: 1px solid #AFC7E5;
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 15px;
+    color: #1B388E;
+    font-family: inherit;
+    user-select: none;
+  }
+  #analysis .overlay-toggle:hover { background: #F7FAFF; }
+  #analysis .overlay-toggle .dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: #ccc;
+    transition: background 0.2s;
+  }
+  #analysis .overlay-toggle.on .dot { background: #E80009; }
+  #analysis .overlay-toggle.on {
+    background: #1B388E;
+    color: white;
+    border-color: #1B388E;
+  }
+  #analysis .img-header-orig {
+    width: 657px; height: 43px;
+    left: 34px; top: 226px; position: absolute;
+    background: #1B388E;
+    border-radius: 10px 10px 0 0;
+    color: white;
+    padding-left: 17px;
+    display: flex; align-items: center;
+    font-size: 20px; font-weight: 500;
+  }
+  #analysis .img-header-ai {
+    width: 657px; height: 43px;
+    left: 749px; top: 226px; position: absolute;
+    background: #E80009;
+    border-radius: 10px 10px 0 0;
+    color: white;
+    padding-left: 17px;
+    display: flex; align-items: center;
+    font-size: 20px; font-weight: 500;
+  }
+  #analysis .img-orig {
+    width: 657px; height: 380px;
+    left: 34px; top: 269px; position: absolute;
+    object-fit: contain;
+    background: #000000;
+    border-radius: 0 0 10px 10px;
+  }
+  #analysis .img-ai {
+    width: 657px; height: 380px;
+    left: 749px; top: 269px; position: absolute;
+    object-fit: contain;
+    background: #000000;
+    border-radius: 0 0 10px 10px;
+  }
+
+  /* 병변 감지/미감지 배지 (디자인 좌표 그대로) */
+  #analysis .lesion-badge {
+    position: absolute;
+    left: 1226px; top: 288px;
+    width: 160.18px; height: 38px;
+    border-radius: 30px;
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+    font-size: 21px; font-weight: 400;
+    z-index: 7;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  #analysis .lesion-badge.detected { background: #E80009; }
+  #analysis .lesion-badge.none     { background: #00842A; }
+
+  /* ===== 가운데 세로 슬라이드 막대 ===== */
+  #analysis .slide-rail {
+    position: absolute;
+    left: 720px; top: 269px;
+    width: 6px; height: 380px;
+    background: #E3EFFF;
+    border-radius: 3px;
+    z-index: 5;
+  }
+  #analysis .slide-thumb {
+    position: absolute;
+    left: 712px;     /* rail보다 약간 넓게 */
+    width: 22px; height: 70px;
+    background: #AFC7E5;
+    border-radius: 11px;
+    cursor: grab;
+    z-index: 6;
+    touch-action: none;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  #analysis .slide-thumb:hover { background: #6BADED; }
+  #analysis .slide-thumb.dragging {
+    background: #1B388E;
+    cursor: grabbing;
+  }
+
+  /* 슬라이더 */
+  #analysis .prev-btn {
+    left: 540px; top: 700px; position: absolute;
+    background: white;
+    color: #1B388E;
+    border: 1px solid #AFC7E5; border-radius: 8px;
+    padding: 8px 24px;
+    font-size: 18px; font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  #analysis .next-btn {
+    left: 800px; top: 700px; position: absolute;
+    background: white;
+    color: #1B388E;
+    border: 1px solid #AFC7E5; border-radius: 8px;
+    padding: 8px 24px;
+    font-size: 18px; font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  #analysis button:disabled { opacity: 0.4; cursor: not-allowed; }
+  #analysis button:hover:not(:disabled) { background: #1B388E; color: white; }
+  #analysis .counter {
+    left: 684px; top: 704px; position: absolute;
+    color: #1B388E; font-size: 20px; font-weight: 600;
+  }
+
+  /* 통계 패널 */
+  #analysis .stat-area-title {
+    left: 51px; top: 799px; position: absolute;
+    color: #1B388E; font-size: 23px; font-weight: 600;
+  }
+  #analysis .stat-area-desc {
+    left: 50px; top: 838px; position: absolute;
+    color: #4A5565; font-size: 17px; font-weight: 400;
+  }
+  #analysis .area-percent {
+    left: 63px; top: 881px; position: absolute;
+    color: #E80009; font-size: 55px; font-weight: 700;
+  }
+  #analysis .donut-wrap {
+    width: 170px; height: 170px;
+    left: 280px; top: 798px; position: absolute;
+  }
+  #analysis .donut-legend-lesion-dot {
+    width: 15px; height: 15px;
+    left: 562px; top: 953px; position: absolute;
+    background: #E80009; border-radius: 50%;
+  }
+  #analysis .donut-legend-lesion {
+    left: 582px; top: 952px; position: absolute;
+    color: #4A5565; font-size: 14px;
+  }
+  #analysis .donut-legend-normal-dot {
+    width: 15px; height: 15px;
+    left: 623px; top: 953px; position: absolute;
+    background: #0062FF; border-radius: 50%;
+  }
+  #analysis .donut-legend-normal {
+    left: 643px; top: 952px; position: absolute;
+    color: #4A5565; font-size: 14px;
+  }
+
+  #analysis .stat-conf-title {
+    left: 774px; top: 799px; position: absolute;
+    color: #1B388E; font-size: 23px; font-weight: 600;
+  }
+  #analysis .stat-conf-desc {
+    left: 774px; top: 838px; position: absolute;
+    color: #4A5565; font-size: 17px; font-weight: 400;
+  }
+  #analysis .conf-label {
+    left: 790px; top: 884px; position: absolute;
+    color: #4A5565; font-size: 17px;
+  }
+  #analysis .conf-value {
+    left: 1320px; top: 884px; position: absolute;
+    color: #1B388E; font-size: 17px; font-weight: 600;
+  }
+  #analysis .conf-bar-bg {
+    width: 579px; height: 23px;
+    left: 788px; top: 916px; position: absolute;
+    background: #D9D9D9; border-radius: 30px;
+  }
+  #analysis .conf-bar-fill {
+    width: 0px; height: 23px;
+    left: 788px; top: 916px; position: absolute;
+    background: #010012;
+    border-radius: 30px;
+    transition: width 0.4s ease;
+  }
+  #analysis .conf-low {
+    left: 790px; top: 948px; position: absolute;
+    color: #4A5565; font-size: 17px;
+  }
+  #analysis .conf-high {
+    left: 1286px; top: 948px; position: absolute;
+    color: #E80009; font-size: 17px; font-weight: 600;
+  }
+
+  /* 로딩 */
+  .loading {
+    position: fixed; inset: 0;
+    background: rgba(249,251,255,0.95);
+    display: none;
+    align-items: center; justify-content: center;
+    flex-direction: column;
+    z-index: 1000;
+  }
+  .loading.show { display: flex; }
+  .spinner {
+    width: 70px; height: 70px;
+    border: 6px solid #E3EFFF;
+    border-top-color: #1B388E;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 20px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text {
+    color: #1B388E; font-size: 22px; font-weight: 500;
+  }
+</style>
+</head>
+<body>
+
+<div class="loading" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loadingText">AI 분석 중...</div>
+</div>
+
+<div class="stage">
+
+<!-- ===== 메인 ===== -->
+<div class="screen active" id="main">
+  <div class="topbar"></div>
+  <div class="topbar-text">V-MAP</div>
+  <div class="logo-img"><img src="img/logo.png" alt="V-MAP Logo"></div>
+  <div class="title">V-MAP</div>
+  <div class="sub">Virtual MRI Contrast Augmentation Platform</div>
+  <div class="desc">AI 기반 뇌 MRI 조영 영역 시각화 시스템</div>
+  <div class="info-card"></div>
+  <div class="info-icon"><img src="img/pulse.png" alt=""></div>
+  <div class="info-text">비조영 뇌 MRI 이미지를 AI로 분석하여 조영제 투여 후 나타날 가능성이 있는 병변 영역을<br>시각적으로 표시하는 첨단 의료 AI 솔루션입니다.</div>
+  <button class="start-btn" onclick="goScreen('upload')">시작하기</button>
+</div>
+
+<!-- ===== 업로드 ===== -->
+<div class="screen" id="upload">
+  <div class="topbar"></div>
+  <div class="topbar-text">V-MAP</div>
+  <div class="panel"></div>
+  <div class="h1">MRI 이미지 업로드</div>
+  <div class="hint">환자의 정보와 뇌 MRI 이미지를 업로드해주세요.</div>
+
+  <div class="label-pid">환자 ID</div>
+  <input class="input-pid" id="patientId" type="text" placeholder="예: 260426">
+
+  <div class="label-age">나이</div>
+  <input class="input-age" id="patientAge" type="number" min="0" max="120" placeholder="예: 26">
+
+  <div class="label-mri">MRI 이미지 업로드</div>
+  <div class="dropzone" id="dropzone"></div>
+  <div class="upload-icon" id="uploadIcon"><img src="img/folder.png" alt=""></div>
+  <div class="dz-title" id="dzTitle">폴더를 선택하여 이미지 업로드</div>
+  <div class="dz-sub" id="dzSub">여러 MRI 이미지를 한번에 업로드할 수 있습니다</div>
+  <div class="pick-btn" id="pickBtnUI"><img src="img/upload.png" alt="">폴더 선택</div>
+  <input type="file" id="fileInput" multiple webkitdirectory directory accept="image/*" style="display:none;">
+
+  <!-- 업로드 완료 화면 (파일 선택 후 표시) -->
+  <div class="upload-done" id="uploadDone">
+    <button class="done-reset" onclick="resetUpload()">다시 선택</button>
+    <div class="done-label">업로드 완료!</div>
+    <div class="done-count"><span id="doneCount">0</span>장</div>
+    <div class="done-msg">의 이미지가 업로드 되었습니다</div>
+  </div>
+
+  <div class="file-status" id="fileStatus"></div>
+  <button class="back-btn" onclick="goScreen('main')">이전</button>
+  <button class="next-btn" id="analyzeBtn" onclick="startAnalyze()" disabled>분석 시작</button>
+</div>
+
+<!-- ===== 분석 ===== -->
+<div class="screen" id="analysis">
+  <div class="topbar"></div>
+  <div class="topbar-text">V-MAP</div>
+
+  <div class="info-bar"></div>
+  <div class="brain-icon"><img src="img/pulse.png" alt=""></div>
+  <div class="meta-text">
+    환자 ID:<span class="v" id="metaPid">-</span>
+    나이:<span class="v" id="metaAge">-</span>
+    이미지 수:<span class="v" id="metaN">-</span>
+  </div>
+  <button class="download-btn" onclick="downloadReport()"><img src="img/download.png" alt="">결과 다운로드</button>
+
+  <!-- 마스크 오버레이 토글 -->
+  <button class="overlay-toggle" id="overlayToggle" onclick="toggleOverlay()">
+    <span class="dot"></span>
+    <span id="overlayLabel">병변 영역 표시</span>
+  </button>
+
+  <div class="img-header-orig">원본 비조영 MRI</div>
+  <div class="img-header-ai">AI 분석 결과</div>
+  <img class="img-orig" id="imgPre" alt="">
+  <img class="img-ai" id="imgFake" alt="">
+
+  <!-- 병변 감지/미감지 배지 -->
+  <div class="lesion-badge detected" id="lesionBadge">
+    <span>⚠️</span>
+    <span id="lesionBadgeText">병변 감지</span>
+  </div>
+
+  <!-- 가운데 세로 슬라이드 막대 (드래그로 슬라이드 이동) -->
+  <div class="slide-rail"></div>
+  <div class="slide-thumb" id="slideThumb"></div>
+
+  <button class="prev-btn" id="prevBtn" onclick="changeIdx(-1)">◀ 이전</button>
+  <div class="counter"><span id="curIdx">1</span> / <span id="totalN">1</span></div>
+  <button class="next-btn" id="nextBtn" onclick="changeIdx(1)">다음 ▶</button>
+
+  <!-- 면적 비율 -->
+  <div class="stat-area-title">면적 비율</div>
+  <div class="stat-area-desc">전체 뇌 대비 병변 예측 면적</div>
+  <div class="area-percent" id="areaPercent">0.0%</div>
+  <div class="donut-wrap">
+    <svg width="170" height="170" viewBox="0 0 170 170" style="transform: rotate(-90deg);">
+      <circle cx="85" cy="85" r="65" fill="none" stroke="#0062FF" stroke-width="30"/>
+      <circle cx="85" cy="85" r="65" fill="none"
+        stroke="#E80009" stroke-width="30"
+        id="donutArc"
+        stroke-dasharray="0 408"
+        pathLength="408"/>
+    </svg>
+  </div>
+  <div class="donut-legend-lesion-dot"></div>
+  <div class="donut-legend-lesion">병변</div>
+  <div class="donut-legend-normal-dot"></div>
+  <div class="donut-legend-normal">정상</div>
+
+  <!-- AI 신뢰 구간 -->
+  <div class="stat-conf-title">AI 신뢰 구간</div>
+  <div class="stat-conf-desc">예측 병변 영역 신뢰도</div>
+  <div class="conf-label">신뢰도</div>
+  <div class="conf-value" id="confValue">0.0%</div>
+  <div class="conf-bar-bg"></div>
+  <div class="conf-bar-fill" id="confFill"></div>
+  <div class="conf-low">낮음</div>
+  <div class="conf-high">높은 신뢰도</div>
+</div>
+
+</div><!-- /stage -->
+
+<script>
+  // ===== 화면 크기에 맞춰 자동 스케일 =====
+  function updateScale() {
+    const sx = window.innerWidth  / 1440;
+    const sy = window.innerHeight / 1024;
+    const scale = Math.min(sx, sy);  // 가로/세로 중 작은 쪽에 맞춤 (잘림 없음)
+    document.documentElement.style.setProperty('--scale', scale);
+  }
+  window.addEventListener('resize', updateScale);
+  window.addEventListener('orientationchange', updateScale);
+  updateScale();
+
+  const API_BASE = '';
+  let selectedFiles = [];
+  let session = { id: null, n: 0, idx: 0 };
+
+  function goScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // 파일 선택
+  const fileInput = document.getElementById('fileInput');
+  const dropzone = document.getElementById('dropzone');
+  const fileStatus = document.getElementById('fileStatus');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => {
+    selectedFiles = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
+    if (selectedFiles.length > 0) {
+      showUploadDone(selectedFiles.length);
+    } else {
+      resetUpload();
+    }
+    analyzeBtn.disabled = selectedFiles.length === 0;
+  });
+
+  function showUploadDone(n) {
+    // 기본 안내 숨기기
+    document.getElementById('uploadIcon').style.display = 'none';
+    document.getElementById('dzTitle').style.display = 'none';
+    document.getElementById('dzSub').style.display = 'none';
+    document.getElementById('pickBtnUI').style.display = 'none';
+    // 드롭존 클릭은 막기 (다시 선택은 우상단 버튼)
+    dropzone.style.pointerEvents = 'none';
+    // 완료 화면 표시
+    document.getElementById('doneCount').textContent = n;
+    document.getElementById('uploadDone').classList.add('show');
+    fileStatus.textContent = '';
+  }
+
+  function resetUpload() {
+    selectedFiles = [];
+    fileInput.value = '';
+    // 기본 안내 복원
+    document.getElementById('uploadIcon').style.display = '';
+    document.getElementById('dzTitle').style.display = '';
+    document.getElementById('dzSub').style.display = '';
+    document.getElementById('pickBtnUI').style.display = '';
+    dropzone.style.pointerEvents = '';
+    // 완료 화면 숨김
+    document.getElementById('uploadDone').classList.remove('show');
+    fileStatus.textContent = '';
+    analyzeBtn.disabled = true;
+  }
+
+  // 분석 시작
+  async function startAnalyze() {
+    const pid = document.getElementById('patientId').value.trim() || 'unknown';
+    const age = document.getElementById('patientAge').value.trim() || '';
+    if (selectedFiles.length === 0) { alert('이미지를 선택해주세요.'); return; }
+
+    const fd = new FormData();
+    fd.append('patient_id', pid);
+    fd.append('age', age);
+    selectedFiles.forEach(f => fd.append('files', f, f.name));
+
+    showLoading(`${selectedFiles.length}장 분석 중...`);
+    try {
+      const res = await fetch(API_BASE + '/predict_batch', { method: 'POST', body: fd });
+      if (!res.ok) throw new Error('서버 오류');
+      const data = await res.json();
+
+      session.id = data.session_id;
+      session.n = data.n_images;
+      session.idx = 0;
+      session.patientId = data.patient_id;
+
+      document.getElementById('metaPid').textContent = data.patient_id;
+      document.getElementById('metaAge').textContent = data.age || '-';
+      document.getElementById('metaN').textContent = data.n_images;
+      document.getElementById('totalN').textContent = data.n_images;
+      renderResult(data.first_result);
+
+      hideLoading();
+      goScreen('analysis');
+    } catch (e) {
+      hideLoading();
+      alert('분석 실패: ' + e.message);
+    }
+  }
+
+  // 현재 결과 저장 (오버레이 토글 시 다시 그리기 위해)
+  let currentResult = null;
+  let overlayOn = false;
+
+  function renderResult(r) {
+    if (!r || r.error) { alert('처리 실패: ' + (r?.error || 'unknown')); return; }
+    currentResult = r;
+
+    // 원본: 토글이 켜져있고 overlay가 있으면 오버레이 이미지 사용
+    if (overlayOn && r.overlay) {
+      document.getElementById('imgPre').src = 'data:image/png;base64,' + r.overlay;
+    } else {
+      document.getElementById('imgPre').src = 'data:image/png;base64,' + r.pre;
+    }
+    document.getElementById('imgFake').src = 'data:image/png;base64,' + r.fake;
+
+    const area = r.area_ratio || 0;
+    document.getElementById('areaPercent').textContent = area.toFixed(1) + '%';
+    const arcLen = (area / 100) * 408;
+    document.getElementById('donutArc').setAttribute('stroke-dasharray', `${arcLen} 408`);
+
+    // 병변 감지/미감지 배지
+    const badge = document.getElementById('lesionBadge');
+    const badgeText = document.getElementById('lesionBadgeText');
+    if (area > 0) {
+      badge.classList.remove('none');
+      badge.classList.add('detected');
+      badgeText.textContent = '병변 감지';
+    } else {
+      badge.classList.remove('detected');
+      badge.classList.add('none');
+      badgeText.textContent = '병변 미감지';
+    }
+
+    const conf = r.confidence || 0;
+    document.getElementById('confValue').textContent = conf.toFixed(1) + '%';
+    document.getElementById('confFill').style.width = (579 * conf / 100) + 'px';
+
+    document.getElementById('curIdx').textContent = session.idx + 1;
+    document.getElementById('prevBtn').disabled = session.idx === 0;
+    document.getElementById('nextBtn').disabled = session.idx >= session.n - 1;
+
+    if (window.updateThumbPosition) window.updateThumbPosition();
+  }
+
+  // 오버레이 토글
+  function toggleOverlay() {
+    overlayOn = !overlayOn;
+    const btn = document.getElementById('overlayToggle');
+    const label = document.getElementById('overlayLabel');
+    if (overlayOn) {
+      btn.classList.add('on');
+      label.textContent = '병변 영역 표시 ON';
+    } else {
+      btn.classList.remove('on');
+      label.textContent = '병변 영역 표시';
+    }
+    // 현재 결과 다시 렌더
+    if (currentResult) renderResult(currentResult);
+  }
+
+  async function changeIdx(delta) {
+    const next = session.idx + delta;
+    if (next < 0 || next >= session.n) return;
+    session.idx = next;
+    try {
+      const res = await fetch(`${API_BASE}/result/${session.id}/${next}`);
+      const data = await res.json();
+      renderResult(data.result);
+    } catch (e) {
+      alert('로드 실패: ' + e.message);
+    }
+  }
+
+  // ===== 세로 막대 드래그로 슬라이드 이동 =====
+  function setupSlideRail() {
+    const thumb = document.getElementById('slideThumb');
+    const railTop = 269;        // 막대 시작 Y (px, stage 좌표계)
+    const railHeight = 380;     // 막대 전체 높이
+    const thumbHeight = 70;
+    const maxOffset = railHeight - thumbHeight;  // thumb이 움직일 수 있는 최대 범위 (310px)
+
+    // 화면 표시용: 인덱스에 따라 thumb 위치 갱신
+    window.updateThumbPosition = function() {
+      if (session.n <= 1) {
+        thumb.style.top = railTop + 'px';
+        return;
+      }
+      const ratio = session.idx / (session.n - 1);
+      const y = railTop + ratio * maxOffset;
+      thumb.style.top = y + 'px';
+    };
+
+    let dragging = false;
+    let startY = 0;
+    let startIdx = 0;
+
+    // 현재 화면 스케일을 읽어서 좌표 보정 (stage가 scale 되어있음)
+    function getScale() {
+      const v = getComputedStyle(document.documentElement).getPropertyValue('--scale');
+      return parseFloat(v) || 1;
+    }
+
+    function onDown(clientY) {
+      dragging = true;
+      startY = clientY;
+      startIdx = session.idx;
+      thumb.classList.add('dragging');
+    }
+
+    function onMove(clientY) {
+      if (!dragging || session.n <= 1) return;
+      const scale = getScale();
+      // 화면상 이동량 → 디자인 좌표 이동량
+      const dy = (clientY - startY) / scale;
+      const idxStep = (dy / maxOffset) * (session.n - 1);
+      let newIdx = Math.round(startIdx + idxStep);
+      newIdx = Math.max(0, Math.min(session.n - 1, newIdx));
+
+      if (newIdx !== session.idx) {
+        session.idx = newIdx;
+        updateThumbPosition();
+        // 슬라이드 이동 (드래그 중에도 실시간 표시)
+        loadResult(newIdx);
+      }
+    }
+
+    function onUp() {
+      dragging = false;
+      thumb.classList.remove('dragging');
+    }
+
+    // 마우스
+    thumb.addEventListener('mousedown', e => { onDown(e.clientY); e.preventDefault(); });
+    document.addEventListener('mousemove', e => onMove(e.clientY));
+    document.addEventListener('mouseup', onUp);
+
+    // 터치 (모바일)
+    thumb.addEventListener('touchstart', e => {
+      onDown(e.touches[0].clientY);
+      e.preventDefault();
+    }, { passive: false });
+    document.addEventListener('touchmove', e => {
+      if (dragging) {
+        onMove(e.touches[0].clientY);
+        e.preventDefault();
+      }
+    }, { passive: false });
+    document.addEventListener('touchend', onUp);
+  }
+  setupSlideRail();
+
+  // 결과 로드 (드래그 중에도 사용)
+  async function loadResult(idx) {
+    try {
+      const res = await fetch(`${API_BASE}/result/${session.id}/${idx}`);
+      const data = await res.json();
+      renderResult(data.result);
+    } catch (e) {
+      console.error('로드 실패:', e);
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    if (!document.getElementById('analysis').classList.contains('active')) return;
+    if (e.key === 'ArrowLeft')  changeIdx(-1);
+    if (e.key === 'ArrowRight') changeIdx(1);
+  });
+
+  async function downloadReport() {
+    if (!session.id) return;
+    showLoading('ZIP 파일 생성 중...');
+    try {
+      const res = await fetch(`${API_BASE}/session/${session.id}/download_zip`);
+      if (!res.ok) throw new Error('서버 오류: ' + res.status);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `VMAP_${session.patientId || 'results'}.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert('다운로드 실패: ' + e.message);
+    } finally {
+      hideLoading();
+    }
+  }
+
+  function showLoading(msg) {
+    document.getElementById('loadingText').textContent = msg;
+    document.getElementById('loading').classList.add('show');
+  }
+  function hideLoading() {
+    document.getElementById('loading').classList.remove('show');
+  }
+</script>
+</body>
+</html>
